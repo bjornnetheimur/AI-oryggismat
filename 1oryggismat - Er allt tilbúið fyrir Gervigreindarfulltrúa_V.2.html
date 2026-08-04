@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Öryggismat fyrir AI-fulltrúa | Netheimur × Sophos</title>
+<style>
+  :root{
+    --bg:#0a0f1c;
+    --bg-panel:#0d1322;
+    --bg-card:#141b2e;
+    --line:#26304a;
+    --line-soft:#1c2438;
+    --ink:#ffffff;
+    --muted:#a7afc4;
+    --muted-dim:#6b7386;
+    --blue:#2fe1c4;
+    --blue-bright:#56ecd3;
+    --coral:#ff5a3c;
+    --green:#2ecf96;
+    --amber:#ffb746;
+    --sans: "Inter","Helvetica Neue",Arial,sans-serif;
+    --mono: "IBM Plex Mono","SF Mono",monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(900px 500px at 85% -10%, rgba(46,107,255,0.22), transparent 60%),
+      radial-gradient(700px 500px at -10% 30%, rgba(255,90,60,0.10), transparent 55%),
+      var(--bg);
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:0 24px 120px;}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:26px 0 18px;border-bottom:1px solid var(--line-soft);}
+  .mark{display:flex;align-items:center;gap:10px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);}
+  .shield{width:20px;height:22px;flex-shrink:0;}
+  .mark b{color:var(--ink);font-weight:600;}
+  .step-pill{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--blue-bright);border:1px solid var(--line);padding:5px 10px;border-radius:20px;background:rgba(47,225,196,0.08);}
+
+  .progress-shell{position:sticky;top:0;z-index:20;background:var(--bg);padding-top:10px;}
+  .progress-track{height:3px;background:var(--line);border-radius:2px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--blue-bright));width:0%;transition:width .4s ease;}
+  .progress-label{font-family:var(--mono);font-size:11px;color:var(--muted-dim);margin-top:6px;letter-spacing:.04em;}
+
+  .hero{padding:60px 0 28px;}
+  .hero-logo{width:76px;height:83px;display:block;margin-bottom:28px;}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--blue-bright);margin:0 0 16px;display:flex;align-items:center;gap:8px;}
+  .eyebrow::before{content:"";width:7px;height:7px;background:var(--coral);border-radius:50%;display:inline-block;}
+  h1{font-family:var(--sans);font-size:44px;line-height:1.08;margin:0 0 20px;font-weight:800;letter-spacing:-.01em;text-transform:uppercase;}
+  h1 .accent{color:var(--blue-bright);}
+  .lede{font-size:17px;line-height:1.6;color:var(--muted);max-width:560px;margin:0 0 36px;}
+
+  .stat-row{display:flex;gap:0;margin:32px 0;border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  .stat-row div{flex:1;padding:18px 18px;border-right:1px solid var(--line);background:rgba(255,255,255,0.015);}
+  .stat-row div:last-child{border-right:none;}
+  .stat-row .num{font-size:26px;font-weight:700;color:var(--blue-bright);display:block;}
+  .stat-row .label{font-size:12px;color:var(--muted);margin-top:2px;}
+
+  .card{background:var(--bg-card);border:1px solid var(--line);border-radius:14px;padding:32px;margin-bottom:24px;box-shadow:0 20px 60px -30px rgba(46,107,255,0.25);}
+  .field{margin-bottom:18px;}
+  .field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--ink);}
+  .field .opt{color:var(--muted-dim);font-weight:400;font-size:12px;}
+  .field input, .field select{
+    width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;
+    font-family:var(--sans);font-size:15px;background:var(--bg-panel);color:var(--ink);
+  }
+  .field input::placeholder{color:var(--muted-dim);}
+  .field input:focus, .field select:focus{outline:2px solid var(--blue);outline-offset:1px;border-color:var(--blue);}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:600px){.row2{grid-template-columns:1fr;}}
+
+  .btn{
+    appearance:none;border:none;background:var(--blue);color:#08111f;
+    font-family:var(--sans);font-weight:700;font-size:15px;padding:14px 26px;
+    border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:10px;
+    transition:transform .15s ease, background .15s ease, box-shadow .15s ease;
+    box-shadow:0 8px 24px -8px rgba(46,107,255,0.55);
+  }
+  .btn:hover{background:var(--blue-bright);}
+  .btn:active{transform:scale(.98);}
+  .btn-ghost{background:transparent;color:var(--ink);border:1px solid var(--line);box-shadow:none;}
+  .btn-ghost:hover{background:rgba(255,255,255,0.04);border-color:var(--muted-dim);}
+  .btn-row{display:flex;justify-content:space-between;align-items:center;margin-top:28px;gap:16px;flex-wrap:wrap;}
+
+  .gdpr-box{margin-top:22px;padding-top:18px;border-top:1px solid var(--line-soft);}
+  .gdpr-text{font-size:12.5px;color:var(--muted-dim);line-height:1.6;margin:0 0 14px;}
+  .gdpr-text a{color:var(--blue-bright);text-decoration:none;}
+  .gdpr-text a:hover{text-decoration:underline;}
+  .gdpr-check{display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;color:var(--muted);line-height:1.5;}
+  .gdpr-check input[type="checkbox"]{margin-top:2px;width:16px;height:16px;flex-shrink:0;accent-color:var(--blue);cursor:pointer;}
+  .gdpr-check .opt{color:var(--muted-dim);}
+
+  .err{color:var(--coral);font-size:13px;margin-top:6px;display:none;}
+
+  .section-head{padding:46px 0 8px;}
+  .section-head h2{font-size:26px;margin:0 0 8px;font-weight:700;color:var(--ink);}
+  .section-head .desc{color:var(--muted);font-size:14px;max-width:520px;line-height:1.55;}
+
+  .qcard{background:var(--bg-card);border:1px solid var(--line);padding:24px 26px;margin-bottom:14px;border-radius:12px;}
+  .qnum{font-family:var(--mono);font-size:11px;color:var(--blue-bright);letter-spacing:.05em;}
+  .qtext{font-size:16.5px;line-height:1.5;margin:6px 0 18px;font-weight:600;color:var(--ink);}
+  .answers{display:flex;gap:8px;flex-wrap:wrap;}
+  .ans-btn{
+    flex:1;min-width:120px;padding:11px 10px;border:1px solid var(--line);background:var(--bg-panel);
+    border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;text-align:center;color:var(--ink);
+    transition:all .12s ease;
+  }
+  .ans-btn:hover{border-color:var(--muted-dim);}
+  .ans-btn.sel-yes{background:var(--green);border-color:var(--green);color:#04261c;}
+  .ans-btn.sel-partial{background:var(--amber);border-color:var(--amber);color:#3a2400;}
+  .ans-btn.sel-no{background:var(--coral);border-color:var(--coral);color:#fff;}
+  .ans-btn.sel-unknown{background:var(--muted-dim);border-color:var(--muted-dim);color:#fff;}
+  .why-toggle{font-size:12px;color:var(--muted);margin-top:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;background:none;border:none;padding:0;font-family:var(--sans);}
+  .why-toggle:hover{color:var(--ink);}
+  .why-box{display:none;margin-top:10px;}
+  .why-box.open{display:block;}
+  .why-box textarea{
+    width:100%;min-height:64px;padding:10px;border:1px solid var(--line);border-radius:8px;
+    font-family:var(--sans);font-size:13px;resize:vertical;background:var(--bg-panel);color:var(--ink);
+  }
+
+  .result-hero{text-align:center;padding:36px 0 8px;}
+  .score-ring{position:relative;width:220px;height:220px;margin:0 auto 8px;}
+  .score-num{font-size:62px;font-weight:700;}
+  .score-sub{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+  .verdict{font-size:24px;margin:18px 0 6px;font-weight:700;}
+  .verdict-desc{color:var(--muted);font-size:15px;max-width:480px;margin:0 auto 8px;line-height:1.55;}
+
+  .catbar-wrap{margin:40px 0 8px;}
+  .catbar-wrap h2{font-size:19px;font-weight:700;margin:0 0 4px;}
+  .catbar-wrap > p{color:var(--muted);font-size:13px;margin:0 0 18px;}
+  .catrow{display:grid;grid-template-columns:200px 1fr 52px;gap:14px;align-items:center;padding:13px 0;border-bottom:1px solid var(--line-soft);}
+  .catrow:last-child{border-bottom:none;}
+  .catname{font-size:13px;font-weight:600;color:var(--ink);}
+  .barshell{height:10px;background:var(--line);border-radius:6px;overflow:hidden;}
+  .barfill{height:100%;border-radius:6px;}
+  .catscore{font-family:var(--mono);font-size:13px;text-align:right;color:var(--muted);}
+
+  .flag-list h2{font-size:19px;font-weight:700;margin:0 0 4px;}
+  .flag-list > p{color:var(--muted);font-size:13px;margin:0 0 8px;}
+  .flag-item{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid var(--line-soft);}
+  .flag-item:last-child{border-bottom:none;}
+  .flag-mark{font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:10px;height:fit-content;white-space:nowrap;}
+  .flag-mark.high{background:rgba(255,90,60,0.16);color:#ff8a72;}
+  .flag-mark.med{background:rgba(255,183,70,0.16);color:#ffcb80;}
+  .flag-text{font-size:14px;line-height:1.5;color:var(--muted);}
+  .flag-text b{display:block;font-size:14.5px;margin-bottom:2px;color:var(--ink);}
+
+  .cta{
+    background:linear-gradient(135deg,#0d1526,#080c16);
+    border:1px solid var(--line);color:var(--ink);padding:42px 32px;border-radius:16px;margin-top:48px;text-align:center;
+    box-shadow:0 30px 80px -40px rgba(47,225,196,0.35);
+  }
+  .cta h3{font-size:24px;margin:0 0 10px;font-weight:700;}
+  .cta p{color:var(--muted);font-size:14px;margin:0 0 22px;max-width:420px;margin-left:auto;margin-right:auto;}
+  .cta .btn{background:var(--coral);box-shadow:0 8px 24px -8px rgba(255,90,60,0.55);}
+  .cta .btn:hover{background:#ff7257;}
+
+  footer{padding:36px 0;text-align:center;font-family:var(--mono);font-size:11px;color:var(--muted-dim);letter-spacing:.04em;}
+
+  .hide{display:none !important;}
+
+  @media (max-width:600px){
+    h1{font-size:30px;}
+    .stat-row{flex-direction:column;}
+    .stat-row div{border-right:none;border-bottom:1px solid var(--line);}
+    .stat-row div:last-child{border-bottom:none;}
+    .answers{flex-direction:column;}
+    .ans-btn{min-width:100%;}
+    .catrow{grid-template-columns:1fr;gap:6px;}
+    .catscore{text-align:left;}
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-shell" id="progressShell" style="display:none;">
+  <div class="wrap" style="padding-top:0;padding-bottom:0;">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel">SPURNING 1 AF 41</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="mark">
+      <svg class="shield" viewBox="-15 -15 480 523" xmlns="http://www.w3.org/2000/svg">
+        <path d="M46.718,0c0,0 372.813,81.562 303.438,492.813c-0,-0.313 26.25,-334.063 -303.438,-492.813Z" fill="#ffffff"/>
+        <path d="M219.531,417.5c-69.688,-6.875 -133.438,-55.938 -160.938,-130c-34.375,-91.875 0.938,-196.25 80,-240.937c-5.625,-1.875 -8.437,-6.875 -9.062,-12.188c-103.125,52.5 -155,167.188 -117.188,268.438c39.063,104.062 164.063,160.625 274.688,117.187c-17.188,0 -34.375,1.875 -67.5,-2.5Z" fill="#ffffff"/>
+        <path d="M448.281,139.375c-39.063,-103.75 -158.438,-151.563 -273.438,-117.813c12.188,0.313 32.813,-0.312 62.813,4.063c71.25,7.187 137.812,57.812 165.625,132.187c30.312,80.938 3.75,170 -57.5,220.313c7.5,0.938 11.562,7.813 11.25,14.375c85.625,-57.187 125.937,-160.938 91.25,-253.125Z" fill="#ffffff"/>
+      </svg>
+      NETHEIMUR <b>×</b> SOPHOS · ÖRYGGISMAT
+    </div>
+    <div class="step-pill" id="stepIndicator">SKREF 1 / 3</div>
+  </div>
+
+  <section id="screenIntake">
+    <div class="hero">
+      <svg class="hero-logo" viewBox="-15 -15 480 523" xmlns="http://www.w3.org/2000/svg">
+        <path d="M46.718,0c0,0 372.813,81.562 303.438,492.813c-0,-0.313 26.25,-334.063 -303.438,-492.813Z" fill="#ffffff"/>
+        <path d="M219.531,417.5c-69.688,-6.875 -133.438,-55.938 -160.938,-130c-34.375,-91.875 0.938,-196.25 80,-240.937c-5.625,-1.875 -8.437,-6.875 -9.062,-12.188c-103.125,52.5 -155,167.188 -117.188,268.438c39.063,104.062 164.063,160.625 274.688,117.187c-17.188,0 -34.375,1.875 -67.5,-2.5Z" fill="#ffffff"/>
+        <path d="M448.281,139.375c-39.063,-103.75 -158.438,-151.563 -273.438,-117.813c12.188,0.313 32.813,-0.312 62.813,4.063c71.25,7.187 137.812,57.812 165.625,132.187c30.312,80.938 3.75,170 -57.5,220.313c7.5,0.938 11.562,7.813 11.25,14.375c85.625,-57.187 125.937,-160.938 91.25,-253.125Z" fill="#ffffff"/>
+      </svg>
+      <p class="eyebrow">AI-FULLTRÚAR · ÖRYGGISÚTTEKT</p>
+      <h1>Er fyrirtækið þitt tilbúið fyrir <span class="accent">Gervigreindar-fulltrúa</span>?</h1>
+      <p class="lede">Metum AI-öryggi þitt á aðeins 7 mínútum. Með 41 markvissum spurningum færðu öryggisskor og skýra sýn á helstu styrkleika og áhættuþætti — byggt á CIS Controls v8.1 fyrir AI Agents, ISO/IEC 42001, sérfræðiþekkingu Netheims og rannsóknum Sophos á AI-áhættu.</p>
+
+      <div class="stat-row">
+        <div><span class="num">41</span><span class="label">spurningar</span></div>
+        <div><span class="num">8</span><span class="label">áhættuflokkar</span></div>
+        <div><span class="num">~7</span><span class="label">mínútur</span></div>
+      </div>
+
+      <div class="card">
+        <div class="field">
+          <label>Fullt nafn <span class="opt">— skylda</span></label>
+          <input type="text" id="iName" placeholder="T.d. Jón Jónsson">
+          <div class="err" id="errName">Vinsamlegast skráðu nafn.</div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>Netfang <span class="opt">— skylda</span></label>
+            <input type="email" id="iEmail" placeholder="jon@fyrirtaeki.is">
+            <div class="err" id="errEmail">Skráðu gilt netfang.</div>
+          </div>
+          <div class="field">
+            <label>Fyrirtæki <span class="opt">— skylda</span></label>
+            <input type="text" id="iCompany" placeholder="Nafn fyrirtækis">
+            <div class="err" id="errCompany">Skráðu nafn fyrirtækis.</div>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>Starfsheiti <span class="opt">— valkvætt</span></label>
+            <input type="text" id="iRole" placeholder="T.d. framkvæmdastjóri">
+          </div>
+          <div class="field">
+            <label>Stærð fyrirtækis <span class="opt">— valkvætt</span></label>
+            <select id="iSize">
+              <option value="">Veldu...</option>
+              <option>1–9 starfsmenn</option>
+              <option>10–49 starfsmenn</option>
+              <option>50–249 starfsmenn</option>
+              <option>250+ starfsmenn</option>
+            </select>
+          </div>
+        </div>
+        <div class="gdpr-box">
+          <p class="gdpr-text">
+            Netheimur ehf. vinnur upplýsingarnar hér að ofan til að reikna öryggisskor og hafa samband varðandi niðurstöður og eftirfylgni. Gögnin eru geymd í allt að 12 mánuði og aðeins aðgengileg starfsfólki Netheimurs. Þú getur óskað eftir eyðingu gagna hvenær sem er með því að hafa samband á <a href="mailto:sala@netheimur.is">sala@netheimur.is</a>.
+          </p>
+          <label class="gdpr-check">
+            <input type="checkbox" id="iConsent">
+            <span>Ég samþykki að Netheimur vinni þessar upplýsingar í samræmi við ofangreint og hafi samband varðandi niðurstöður matsins. <span class="opt">— skylda</span></span>
+          </label>
+          <div class="err" id="errConsent">Þú þarft að samþykkja vinnslu gagna til að halda áfram.</div>
+        </div>
+        <div class="btn-row">
+          <span style="font-size:12px;color:var(--muted-dim);max-width:240px;">Svörin þín eru aðeins notuð til að senda þér niðurstöður og fylgja eftir með ráðgjöf.</span>
+          <button class="btn" id="startBtn">Byrja matið →</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="screenQuiz" class="hide">
+    <div id="quizSections"></div>
+    <div class="btn-row" style="margin-top:32px;">
+      <button class="btn btn-ghost" id="backBtn">← Til baka</button>
+      <button class="btn" id="seeResultsBtn">Sjá niðurstöður →</button>
+    </div>
+  </section>
+
+  <section id="screenResults" class="hide">
+    <div class="result-hero">
+      <p class="eyebrow" style="justify-content:center;">NIÐURSTAÐA ÞÍN</p>
+      <div class="score-ring">
+        <svg width="220" height="220" viewBox="0 0 220 220">
+          <circle cx="110" cy="110" r="96" fill="none" stroke="#324072" stroke-width="14"/>
+          <circle id="scoreArc" cx="110" cy="110" r="96" fill="none" stroke="#2fe1c4" stroke-width="14"
+            stroke-linecap="round" stroke-dasharray="603" stroke-dashoffset="603" transform="rotate(-90 110 110)"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <div class="score-num" id="scoreNum">0</div>
+          <div class="score-sub">af 100</div>
+        </div>
+      </div>
+      <div class="verdict" id="verdictText">—</div>
+      <p class="verdict-desc" id="verdictDesc">—</p>
+    </div>
+
+    <div class="catbar-wrap">
+      <h2>Staða eftir áhættuflokkum</h2>
+      <p>100% þýðir fulla stýringu á flokknum, 0% engin stýring til staðar.</p>
+      <div id="catBars"></div>
+    </div>
+
+    <div class="flag-list">
+      <h2>Það sem þarfnast athygli fyrst</h2>
+      <p>Byggt á svörunum þínum — mikilvægustu götin í forgangsröð.</p>
+      <div id="flagItems"></div>
+    </div>
+
+    <div class="cta">
+      <h3>Förum yfir þetta saman</h3>
+      <p>Netheimur, í samstarfi við Sophos, hjálpar íslenskum fyrirtækjum að taka þessi skref — frá grunnvörnum upp í fulla AI-fulltrúa stýringu.</p>
+      <button class="btn" id="bookBtn">Panta stutt símtal</button>
+    </div>
+
+    <div style="text-align:center;margin-top:18px;">
+      <button class="btn btn-ghost" id="restartBtn" style="font-size:13px;padding:10px 18px;">Taka matið aftur</button>
+    </div>
+  </section>
+
+</div>
+
+<footer>NETHEIMUR EHF · Í SAMSTARFI VIÐ SOPHOS · ÖRYGGISMAT BYGGT Á CIS CONTROLS v8.1 (AI AGENTS) OG ISO/IEC 42001</footer>
+
+<script>
+const CATEGORIES = [
+  {
+    id: "identity",
+    name: "Aðgangsstýring og auðkenni",
+    blurb: "Hver má kveikja á fulltrúanum, hvað má hann gera og hvernig er það afturkallað.",
+    color: "#2fe1c4",
+    questions: [
+      { w:2, t:"Vitum við nákvæmlega hvaða AI-fulltrúar eru í notkun hjá okkur og hver ber ábyrgð á hverjum þeirra?" },
+      { w:2, t:"Hafa fulltrúar aðgang að gögnum og kerfum aðeins út frá því sem þeir nauðsynlega þurfa (ekki víðtækari aðgang \"til öryggis\")?" },
+      { w:1, t:"Er tveggja þátta auðkenning (MFA) virk fyrir alla stjórnun á AI-kerfum og verkfærum?" },
+      { w:2, t:"Vitum við hvaða aðgangslyklar/tokens AI-fulltrúar nota, og eru þeir aðgreindir frá venjulegum notendaaðgangi?" },
+      { w:1, t:"Er aðgangur fulltrúa afturkallaður strax þegar hann er tekinn úr notkun eða verkefni breytist?" },
+      { w:2, t:"Þarf fulltrúinn samþykki starfsmanns áður en hann framkvæmir áhættusamar aðgerðir (t.d. senda greiðslu eða eyða gögnum)?" },
+    ],
+  },
+  {
+    id: "data",
+    name: "Gagnavernd og friðhelgi",
+    blurb: "Hvað \"man\" fulltrúinn, hvar er það geymt og hver kemst í það.",
+    color: "#56ecd3",
+    questions: [
+      { w:2, t:"Vitum við hvaða viðkvæmu gögn (kennitölur, fjárhagsupplýsingar, lykilorð) fulltrúar okkar geta komist í?" },
+      { w:1, t:"Er „minni“ fulltrúa (samtöl, fyrri svör, gögn sem hann notar) dulkóðað og varið?" },
+      { w:2, reverse:true, t:"Eru lykilorð og API-lyklar skrifaðir beint inn í leiðbeiningar, kóða eða spjall við AI-kerfi?" },
+      { w:1, t:"Höfum við skýrar reglur um hversu langan tíma gögn fulltrúa eru geymd áður en þeim er eytt?" },
+      { w:1, t:"Eru gögn frá mismunandi deildum eða verkefnum aðskilin þannig að einn fulltrúi geti ekki blandað þeim saman fyrir slysni?" },
+    ],
+  },
+  {
+    id: "tooling",
+    name: "Verkfæri og keyrsluumhverfi",
+    blurb: "Hvað fulltrúinn getur gert út í heiminn — vafrað, keyrt kóða, kallað í önnur kerfi.",
+    color: "#ffb746",
+    questions: [
+      { w:2, t:"Eru AI-fulltrúar sem keyra kóða eða skipanir einangraðir frá öðrum mikilvægum kerfum (svokölluð sandbox-einangrun)?" },
+      { w:1, t:"Er notkun á netnotkun og niðurhali skráa hjá fulltrúum takmörkuð við ákveðin, samþykkt vefsvæði?" },
+      { w:1, t:"Er hugbúnaður og viðbætur sem AI-fulltrúar nota reglulega uppfærður?" },
+      { w:2, t:"Vitum við hvaða utanaðkomandi þjónustur (líkön, gagnagrunnar, viðbætur) fulltrúar okkar treysta á?" },
+      { w:1, t:"Höfum við prófað hvað gerist ef fulltrúi fær misvísandi eða villandi fyrirmæli (t.d. falinn texta í tölvupósti eða skjali)?" },
+    ],
+  },
+  {
+    id: "monitoring",
+    name: "Vöktun og atvikastjórnun",
+    blurb: "Sjáum við hvað fulltrúinn gerir — og hvað gerum við þegar eitthvað fer úrskeiðis.",
+    color: "#ff5a3c",
+    questions: [
+      { w:2, t:"Höldum við skrá yfir allar aðgerðir AI-fulltrúa (hvað var gert, hvenær og af hverjum/hvaða kerfi)?" },
+      { w:1, t:"Förum við reglulega yfir þessar skrár til að leita að óvenjulegri hegðun?" },
+      { w:2, t:"Höfum við skilgreint hvað við gerum ef fulltrúi hagar sér óvænt eða framkvæmir óheimila aðgerð?" },
+      { w:1, t:"Vitum við hver innan fyrirtækisins ber ábyrgð á að bregðast við atviki sem tengist AI-kerfi?" },
+      { w:1, t:"Getum við stoppað eða gert AI-fulltrúa óvirkan á fljótlegan hátt ef hann er misnotaður eða ógnar öryggi?" },
+    ],
+  },
+  {
+    id: "vendors",
+    name: "Þjónustuveitendur og innkaup",
+    blurb: "Hverjum treystum við fyrir gögnunum okkar þegar við notum AI-þjónustur þriðja aðila.",
+    color: "#2ecf96",
+    questions: [
+      { w:1, t:"Höfum við yfirsýn yfir alla utanaðkomandi AI-þjónustuveitendur sem fyrirtækið notar (ChatGPT, Claude, Copilot og fleiri)?" },
+      { w:2, t:"Vitum við hvort og hvernig þjónustuveitendur okkar nota gögnin okkar (t.d. til að þjálfa eigin líkön)?" },
+      { w:1, t:"Eru samningsbundin öryggisákvæði til staðar við þjónustuveitendur sem vinna með viðkvæm gögn fyrir okkur?" },
+      { w:1, t:"Höfum við ferli til að taka þjónustuveitanda úr notkun á öruggan hátt (eyða aðgangi, gögnum og lyklum)?" },
+    ],
+  },
+  {
+    id: "awareness",
+    name: "Vitund og ferlar",
+    blurb: "Skilur starfsfólk áhættuna og er til staðar skýr stefna um notkun AI.",
+    color: "#8b95c2",
+    questions: [
+      { w:1, t:"Hefur starfsfólk fengið einhvers konar fræðslu um áhættuna af AI-fulltrúum (t.d. að þeir geti verið blekktir með innihaldi sem þeir lesa)?" },
+      { w:1, t:"Er til skrifleg stefna um hvaða AI-verkfæri má nota innan fyrirtækisins og hvernig?" },
+      { w:1, t:"Veit starfsfólk hvert það á að tilkynna ef það tekur eftir grunsamlegri hegðun frá AI-kerfi?" },
+      { w:1, t:"Er einhver innan fyrirtækisins með skýrt skilgreinda ábyrgð á öryggi AI-kerfa?" },
+    ],
+  },
+  {
+    id: "vendortrust",
+    name: "Öryggisvörur og AI-traust",
+    blurb: "Hversu vel vitum við hvað er á bak við AI-eiginleikana í öryggisvörunum sem við kaupum og treystum á.",
+    color: "#2fe1c4",
+    questions: [
+      { w:2, t:"Þegar við veljum öryggisvörur (vírusvörn, eldveggi, eftirlitskerfi) sem nota AI, könnum við hvernig og á hverju AI-eiginleikar þeirra eru þjálfaðir?" },
+      { w:1, t:"Vitum við hvort söluaðili öryggisvöru getur útskýrt hvernig hann prófar og gæðatryggir AI-eiginleika áður en þeir fara í notkun?" },
+      { w:2, t:"Er starfsfólk þjálfað sérstaklega í að þekkja AI-studd fjársvik — t.d. raddklónun eða myndbönd (deepfake) sem þykjast vera yfirmaður að biðja um greiðslu eða viðkvæmar upplýsingar?" },
+      { w:1, t:"Höfum við skýrt ferli til að staðfesta óvenjulegar beiðnir um greiðslu eða gagnaflutning (t.d. að hringja til baka eða nota lykilorð) áður en brugðist er við?" },
+      { w:1, t:"Þegar starfsfólk notar opin AI-líkön (ChatGPT, önnur tól), gætir það þess að nota aðeins viðurkennda þjónustuveitendur (ekki eftirhermur með svipuðum nöfnum)?" },
+    ],
+  },
+  {
+    id: "governance42001",
+    name: "AI-stjórnarhættir og ábyrgð",
+    blurb: "Hvort fyrirtækið hefur formlega umgjörð um ábyrga AI notkun, ekki bara tæknilegar varnir — í anda ISO/IEC 42001.",
+    color: "#2ecf96",
+    questions: [
+      { w:2, t:"Vitum við nákvæmlega hvaða AI-verkfæri starfsfólk notar í starfi — þar á meðal verkfæri sem IT-deild hefur ekki formlega samþykkt (t.d. ChatGPT, Gemini notað á eigin spýtur)?" },
+      { w:2, t:"Er gert mat á áhrifum AI-kerfis áður en það er tekið í notkun, ef það tekur ákvarðanir sem snerta fólk (t.d. ráðningar, lánshæfi, þjónustustig)?" },
+      { w:1, t:"Getum við útskýrt fyrir viðskiptavini eða starfsmanni hvernig AI-kerfi komst að ákveðinni niðurstöðu, ef eftir því er leitað?" },
+      { w:2, t:"Er alltaf ábyrgðaraðili sem getur yfirfarið eða stoppað AI-ákvörðun áður en hún hefur áhrif á viðskiptavin, ekki bara á áhættusamar aðgerðir eins og greiðslur?" },
+      { w:1, t:"Vitum við hvaðan gögnin sem AI-kerfi okkar byggja á koma, og hvernig þau voru unnin eða merkt?" },
+      { w:1, t:"Er tekið tillit til hlutdrægni (bias) í gögnum eða niðurstöðum AI-kerfa sem hafa áhrif á fólk?" },
+      { w:1, t:"Er einhver vöktun á því hvort nákvæmni eða frammistaða AI-kerfis minnki með tímanum (t.d. líkön sem víkja smám saman frá upprunalegri hegðun)?" },
+    ],
+  },
+];
+
+const ANSWER_VALUES = { yes: 1, partial: 0.5, no: 0, unknown: 0.25 };
+const ANSWER_VALUES_REVERSE = { yes: 0, partial: 0.5, no: 1, unknown: 0.25 };
+const ANSWER_LABELS = { yes: "Já", partial: "Hluta til", no: "Nei", unknown: "Veit ekki" };
+
+let state = {
+  intake: {},
+  answers: {},
+};
+
+const allQuestions = [];
+CATEGORIES.forEach(cat => cat.questions.forEach((q, i) => {
+  allQuestions.push({ catId: cat.id, idx: i, ...q });
+}));
+const TOTAL_Q = allQuestions.length;
+
+document.getElementById("startBtn").addEventListener("click", () => {
+  const name = document.getElementById("iName").value.trim();
+  const email = document.getElementById("iEmail").value.trim();
+  const company = document.getElementById("iCompany").value.trim();
+  const consent = document.getElementById("iConsent").checked;
+  let ok = true;
+  document.getElementById("errName").style.display = name ? "none" : "block";
+  document.getElementById("errEmail").style.display = /\S+@\S+\.\S+/.test(email) ? "none" : "block";
+  document.getElementById("errCompany").style.display = company ? "none" : "block";
+  document.getElementById("errConsent").style.display = consent ? "none" : "block";
+  if (!name) ok = false;
+  if (!/\S+@\S+\.\S+/.test(email)) ok = false;
+  if (!company) ok = false;
+  if (!consent) ok = false;
+  if (!ok) return;
+
+  state.intake = {
+    name, email, company,
+    role: document.getElementById("iRole").value.trim(),
+    size: document.getElementById("iSize").value,
+    startedAt: new Date().toISOString(),
+    consentGiven: true,
+    consentAt: new Date().toISOString(),
+  };
+
+  document.getElementById("screenIntake").classList.add("hide");
+  document.getElementById("screenQuiz").classList.remove("hide");
+  document.getElementById("progressShell").style.display = "block";
+  document.getElementById("stepIndicator").textContent = "SKREF 2 / 3";
+  renderQuiz();
+  updateProgress();
+  window.scrollTo({top:0, behavior:"smooth"});
+});
+
+function renderQuiz() {
+  const container = document.getElementById("quizSections");
+  container.innerHTML = "";
+  CATEGORIES.forEach(cat => {
+    const head = document.createElement("div");
+    head.className = "section-head";
+    head.innerHTML = `
+      <p class="eyebrow" style="color:${cat.color}">ÁHÆTTUFLOKKUR</p>
+      <h2>${cat.name}</h2>
+      <p class="desc">${cat.blurb}</p>
+    `;
+    container.appendChild(head);
+
+    cat.questions.forEach((q, i) => {
+      const key = cat.id + "-" + i;
+      const qEl = document.createElement("div");
+      qEl.className = "qcard";
+      qEl.innerHTML = `
+        <div class="qnum">SPURNING ${allQuestions.findIndex(x=>x.catId===cat.id && x.idx===i)+1} / ${TOTAL_Q}</div>
+        <div class="qtext">${q.t}</div>
+        <div class="answers" data-key="${key}">
+          <button class="ans-btn" data-val="yes">Já</button>
+          <button class="ans-btn" data-val="partial">Hluta til</button>
+          <button class="ans-btn" data-val="no">Nei</button>
+          <button class="ans-btn" data-val="unknown">Veit ekki</button>
+        </div>
+        <button class="why-toggle" data-key="${key}">+ Bæta við rökstuðningi / athugasemd</button>
+        <div class="why-box" data-key="${key}">
+          <textarea placeholder="Valfrjálst — t.d. hvers vegna, hvað er í vinnslu, eða hvað vantar."></textarea>
+        </div>
+      `;
+      container.appendChild(qEl);
+    });
+  });
+
+  container.querySelectorAll(".answers").forEach(group => {
+    const key = group.dataset.key;
+    group.querySelectorAll(".ans-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const val = btn.dataset.val;
+        state.answers[key] = state.answers[key] || {};
+        state.answers[key].val = val;
+        group.querySelectorAll(".ans-btn").forEach(b => b.classList.remove("sel-yes","sel-partial","sel-no","sel-unknown"));
+        btn.classList.add("sel-" + val);
+        updateProgress();
+      });
+    });
+  });
+
+  container.querySelectorAll(".why-toggle").forEach(t => {
+    t.addEventListener("click", () => {
+      const key = t.dataset.key;
+      const box = container.querySelector(`.why-box[data-key="${key}"]`);
+      box.classList.toggle("open");
+    });
+  });
+  container.querySelectorAll(".why-box textarea").forEach(ta => {
+    const key = ta.closest(".why-box").dataset.key;
+    ta.addEventListener("input", () => {
+      state.answers[key] = state.answers[key] || {};
+      state.answers[key].note = ta.value;
+    });
+  });
+}
+
+function updateProgress() {
+  const answered = Object.keys(state.answers).filter(k => state.answers[k].val).length;
+  const pct = Math.round((answered / TOTAL_Q) * 100);
+  document.getElementById("progressFill").style.width = pct + "%";
+  document.getElementById("progressLabel").textContent = `SVARAÐ ${answered} AF ${TOTAL_Q} · ${pct}%`;
+}
+
+document.getElementById("backBtn").addEventListener("click", () => {
+  document.getElementById("screenQuiz").classList.add("hide");
+  document.getElementById("screenIntake").classList.remove("hide");
+  document.getElementById("progressShell").style.display = "none";
+  document.getElementById("stepIndicator").textContent = "SKREF 1 / 3";
+  window.scrollTo({top:0});
+});
+
+document.getElementById("seeResultsBtn").addEventListener("click", () => {
+  computeAndRenderResults();
+  document.getElementById("screenQuiz").classList.add("hide");
+  document.getElementById("screenResults").classList.remove("hide");
+  document.getElementById("progressShell").style.display = "none";
+  document.getElementById("stepIndicator").textContent = "SKREF 3 / 3";
+  window.scrollTo({top:0, behavior:"smooth"});
+  persistResults();
+});
+
+document.getElementById("restartBtn").addEventListener("click", () => {
+  state = { intake: {}, answers: {} };
+  document.getElementById("iName").value = "";
+  document.getElementById("iEmail").value = "";
+  document.getElementById("iCompany").value = "";
+  document.getElementById("iRole").value = "";
+  document.getElementById("iSize").value = "";
+  document.getElementById("iConsent").checked = false;
+  document.getElementById("errConsent").style.display = "none";
+  document.getElementById("screenResults").classList.add("hide");
+  document.getElementById("screenIntake").classList.remove("hide");
+  document.getElementById("stepIndicator").textContent = "SKREF 1 / 3";
+  window.scrollTo({top:0});
+});
+
+document.getElementById("bookBtn").addEventListener("click", () => {
+  const subject = encodeURIComponent("Öryggismat - viltu fara yfir niðurstöður mínar?");
+  const body = encodeURIComponent(
+    `Hæ,\n\nÉg lauk öryggismati frá Netheimi fyrir AI-fulltrúa og fékk ${document.getElementById("scoreNum").textContent}/100.\n\nFyrirtæki: ${state.intake.company || ""}\nNafn: ${state.intake.name || ""}\n\nVið viljum gjarnan fara yfir niðurstöðurnar með sérfræðingum ykkar.\n\nKveðja,\n${state.intake.name || ""}`
+  );
+  window.location.href = `mailto:sala@netheimur.is?subject=${subject}&body=${body}`;
+});
+
+function computeAndRenderResults() {
+  let totalWeighted = 0;
+  let totalMaxWeighted = 0;
+  const catResults = [];
+  const flags = [];
+
+  CATEGORIES.forEach(cat => {
+    let catScore = 0, catMax = 0;
+    cat.questions.forEach((q, i) => {
+      const key = cat.id + "-" + i;
+      const ans = state.answers[key];
+      const scoreMap = q.reverse ? ANSWER_VALUES_REVERSE : ANSWER_VALUES;
+      const val = ans && ans.val ? scoreMap[ans.val] : 0.25;
+      catScore += val * q.w;
+      catMax += q.w;
+      totalWeighted += val * q.w;
+      totalMaxWeighted += q.w;
+
+      if (ans && (ans.val === "no" || ans.val === "unknown")) {
+        flags.push({
+          severity: q.w >= 2 ? "high" : "med",
+          cat: cat.name,
+          text: q.t,
+          answer: ANSWER_LABELS[ans.val],
+          note: ans.note || "",
+        });
+      } else if (!ans || !ans.val) {
+        flags.push({ severity: q.w >= 2 ? "high" : "med", cat: cat.name, text: q.t, answer: "Ósvarað", note: "" });
+      }
+    });
+    catResults.push({ ...cat, pct: Math.round((catScore / catMax) * 100) });
+  });
+
+  const finalScore = Math.round((totalWeighted / totalMaxWeighted) * 100);
+
+  document.getElementById("scoreNum").textContent = finalScore;
+  const circumference = 603;
+  const offset = circumference - (circumference * finalScore / 100);
+  const arc = document.getElementById("scoreArc");
+  arc.style.strokeDashoffset = offset;
+  let ringColor = "#2ecf96";
+  if (finalScore < 40) ringColor = "#ff5a3c";
+  else if (finalScore < 70) ringColor = "#ffb746";
+  arc.setAttribute("stroke", ringColor);
+
+  let verdict, desc;
+  if (finalScore >= 80) {
+    verdict = "Sterk staða"; desc = "Fyrirtækið er með traustar grunnvarnir í kringum AI-fulltrúa. Næstu skref snúast um fínstillingu og að halda í við breytingar.";
+  } else if (finalScore >= 60) {
+    verdict = "Gott en götótt"; desc = "Grunnstoðir eru til staðar, en nokkrir mikilvægir hlekkir vantar sem auka áhættu verulega ef AI-notkun eykst.";
+  } else if (finalScore >= 40) {
+    verdict = "Í mótun"; desc = "Fyrirtækið er að taka fyrstu skrefin, en mikilvæg svæði — sérstaklega aðgangsstýring og vöktun — þurfa tafarlausa athygli.";
+  } else {
+    verdict = "Veruleg áhætta"; desc = "AI-fulltrúar eru í notkun eða á leiðinni án þeirra grunnvarna sem þarf. Mælt er með úttekt og aðgerðaáætlun fljótlega.";
+  }
+  document.getElementById("verdictText").textContent = verdict;
+  document.getElementById("verdictDesc").textContent = desc;
+
+  const barsEl = document.getElementById("catBars");
+  barsEl.innerHTML = "";
+  catResults.sort((a,b) => a.pct - b.pct);
+  catResults.forEach(c => {
+    const row = document.createElement("div");
+    row.className = "catrow";
+    row.innerHTML = `
+      <div class="catname">${c.name}</div>
+      <div class="barshell"><div class="barfill" style="width:${c.pct}%;background:${c.color}"></div></div>
+      <div class="catscore">${c.pct}%</div>
+    `;
+    barsEl.appendChild(row);
+  });
+
+  const sevRank = { high: 0, med: 1 };
+  const ansRank = { "Nei": 0, "Veit ekki": 1, "Ósvarað": 2 };
+  flags.sort((a,b) => (sevRank[a.severity]-sevRank[b.severity]) || (ansRank[a.answer]-ansRank[b.answer]));
+  const flagsEl = document.getElementById("flagItems");
+  flagsEl.innerHTML = "";
+  const topFlags = flags.slice(0, 8);
+  if (topFlags.length === 0) {
+    flagsEl.innerHTML = `<p style="color:var(--muted);font-size:14px;">Engin sérstök rauð flögg — vel gert.</p>`;
+  } else {
+    topFlags.forEach(f => {
+      const item = document.createElement("div");
+      item.className = "flag-item";
+      item.innerHTML = `
+        <div class="flag-mark ${f.severity}">${f.severity === "high" ? "MIKILVÆGT" : "ATHUGA"}</div>
+        <div class="flag-text">
+          <b>${f.text}</b>
+          ${f.cat} · Svar: ${f.answer}
+          ${f.note ? `<div style="margin-top:4px;font-style:italic;color:var(--muted-dim);">„${f.note}“</div>` : ""}
+        </div>
+      `;
+      flagsEl.appendChild(item);
+    });
+  }
+
+  state.results = { finalScore, verdict, catResults, flags, completedAt: new Date().toISOString() };
+}
+
+async function persistResults() {
+  const record = {
+    timestamp: new Date().toISOString(),
+    name: state.intake.name || "",
+    email: state.intake.email || "",
+    company: state.intake.company || "",
+    role: state.intake.role || "",
+    consentGiven: state.intake.consentGiven || false,
+    consentAt: state.intake.consentAt || "",
+    finalScore: state.results.finalScore,
+    verdict: state.results.verdict,
+    categoryScores: state.results.catResults.map(c => ({ name: c.name, pct: c.pct })),
+    answers: state.answers,
+  };
+
+  // Aðalleið: senda á Google Apps Script Web App svo Netheimur fái svörin og
+  // netfangið vistað varanlega (sjá AppsScript_Vidskiptavinir.gs).
+  // Settu Web App slóðina hér þegar hún er tilbúin:
+  const SUBMIT_URL = ""; // t.d. "https://script.google.com/macros/s/XXXXXXXX/exec"
+
+  if (SUBMIT_URL) {
+    try {
+      await fetch(SUBMIT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(record),
+      });
+    } catch (e) {
+      console.error("Ekki tókst að senda niðurstöður á Netheimur:", e);
+    }
+  } else {
+    console.warn("SUBMIT_URL er ekki stillt — niðurstöður eru EKKI vistaðar hjá Netheimur. Sjá leiðbeiningar í AppsScript_Vidskiptavinir.gs.");
+  }
+
+  // Vara-afrit í vafra þess sem tekur matið, ef þessi síða keyrir einhvern
+  // tíma inni í Claude Artifact-glugga (window.storage er annars ekki til).
+  if (window.storage && typeof window.storage.set === "function") {
+    try {
+      const id = "submission:" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+      await window.storage.set(id, JSON.stringify(record), true);
+    } catch (e) {
+      console.error("Could not persist to window.storage:", e);
+    }
+  }
+}
+
+</script>
+</body>
+</html>
